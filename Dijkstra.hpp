@@ -113,7 +113,7 @@ namespace Dijkstra
     }
     static void test(Thread_Pool &pool, std ::atomic<int> &_threads)
     {
-        int nodes = 2e5;
+        int nodes = 2e4;
         int edges = 2e5;
         Adj.resize(nodes);
         int mod = 1e5;

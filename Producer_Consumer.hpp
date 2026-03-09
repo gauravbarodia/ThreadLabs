@@ -122,7 +122,7 @@ namespace Producer_Consumer
         end = std::chrono::high_resolution_clock::now();
         auto Para_time = std::chrono::duration<double>(end - start).count();
 
-        std::cout << "\nProducer–Consumer Pattern Benchmark\n";
+        std::cout << "\nProducer-Consumer Pattern Benchmark\n";
         std::cout << "Sequential Time : " << Seq_time << " sec\n";
         std::cout << "Parallel Time   : " << Para_time << " sec\n";
         std::cout << "Speedup         : " << Seq_time / Para_time << "x\n";

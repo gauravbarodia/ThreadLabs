@@ -24,6 +24,7 @@ int main()
     Fibonacci::test(pool,_threads);
     Dijkstra::test(pool, _threads);
     Producer_Consumer::test(pool,_threads);
+
     std::cout << "\nAll tests completed.\n";
     return 0;
 }
