@@ -66,10 +66,11 @@ namespace Dijkstra
                         for(auto &[v,w]:Adj[u]){
                             int new_dist=d+w;
                             int old_dist=dist[v];
-                            if(old_dist>new_dist){
+                            while(old_dist>new_dist){
                                 if (__atomic_compare_exchange_n(&dist[v], &old_dist, new_dist, false,__ATOMIC_RELAXED, __ATOMIC_RELAXED))
                                 {
                                     local_relaxed_nodes.push_back(v);
+                                    break;
                                 }
                             }
 
