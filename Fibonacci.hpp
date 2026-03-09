@@ -52,7 +52,7 @@ namespace Fibonacci
     }
     static void test(Thread_Pool &pool, std ::atomic<int> &_threads)
     {
-        int n = 1e9;
+        int n = 1e7;
         auto start = std ::chrono::high_resolution_clock::now();
         long long s_nth = Seq_Fib(n);
         auto end = std ::chrono::high_resolution_clock::now();
