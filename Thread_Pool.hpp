@@ -25,7 +25,7 @@ public:
         for (int i = 0; i < threads; i++)
         {
             workers.emplace_back([this]
-            {
+                                 {
                 while(true){
                     std :: function<void()>task;
                         {
@@ -34,11 +34,9 @@ public:
                             if(stop && tasks.empty())return ;
                             task=std :: move(tasks.front());
                             tasks.pop();
-                            
                         }
-                        task();
-                } 
-            });
+                    task();
+                } });
         }
     }
     ~Thread_Pool()
@@ -66,9 +64,7 @@ public:
         {
             std ::unique_lock<std ::mutex> lock(mtx);
             tasks.emplace([task_ptr]()
-                { 
-                    (*task_ptr)(); 
-                });
+                          { (*task_ptr)(); });
         }
         cv.notify_one();
         return fut;

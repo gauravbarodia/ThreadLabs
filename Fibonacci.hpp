@@ -20,8 +20,8 @@ namespace Fibonacci
         long long b = Seq_Fib(k + 1);
 
         if (n % 2 == 0)
-            return (a * a % mod + b * b % mod) % mod;
-        return (2 * (a * b % mod) % mod + b * b % mod) % mod;
+            return ((2 * (a * b % mod) % mod - a * a % mod) + mod) % mod;
+        return (a * a % mod + b * b % mod) % mod;
     }
     long long Para_Fib(int n, Thread_Pool &pool, std ::atomic<int> &_threads)
     {
@@ -38,17 +38,16 @@ namespace Fibonacci
         int k = n / 2;
 
         auto fut_b = pool.submit([k, &pool, &_threads]()
-            {
-                _threads.fetch_sub(1); 
-                return Para_Fib(k + 1, pool, _threads); 
-               
-            });
+                                 {
+                                     _threads.fetch_sub(1);
+                                     return Para_Fib(k + 1, pool, _threads);
+                                 });
         long long a = Para_Fib(k, pool, _threads);
         long long b = fut_b.get();
-         _threads.fetch_add(1); 
+        _threads.fetch_add(1);
         if (n % 2 == 0)
-            return (a * a % mod + b * b % mod) % mod;
-        return (2 * (a * b % mod) % mod + b * b % mod) % mod;
+            return ((2 * (a * b % mod) % mod - a * a % mod) + mod) % mod;
+        return (a * a % mod + b * b % mod) % mod;
     }
     static void test(Thread_Pool &pool, std ::atomic<int> &_threads)
     {

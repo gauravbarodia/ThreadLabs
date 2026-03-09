@@ -1,27 +1,34 @@
 #pragma once
 #include <iostream>
-#include <vector>
 #include <queue>
+#include <vector>
 #include <atomic>
 #include <mutex>
+#include <condition_variable>
+#include <future>
 #include <chrono>
 #include "Thread_Pool.hpp"
 
-std::atomic<int> final_products = 0;
-int buffer_count = 0;
-std ::condition_variable cv_c;
-std ::mutex mtx;
 namespace Producer_Consumer
 {
 
+    const int BUFFER_MAX = 10; 
+
+    std::queue<int> buffer;
+    std::mutex mtx;
+    std::condition_variable cv_not_full, cv_not_empty;
+
+   
     void produce()
     {
-        std ::this_thread::sleep_for(std ::chrono ::milliseconds(3));
+        std::this_thread::sleep_for(std::chrono::milliseconds(3));
     }
+
     void consume()
     {
-        std ::this_thread::sleep_for(std ::chrono ::milliseconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
+
     void Seq(int raw_products)
     {
         for (int i = 0; i < raw_products; i++)
@@ -30,79 +37,95 @@ namespace Producer_Consumer
             consume();
         }
     }
-    void produce_task(int items)
+
+
+    void producer_task(int items)
     {
         for (int i = 0; i < items; i++)
         {
             produce();
-            
-            final_products++;
-            cv_c.notify_one();
+
+            std::unique_lock<std::mutex> lock(mtx);
+
+            cv_not_full.wait(lock, []()
+            {
+                return buffer.size() < BUFFER_MAX;
+            });
+
+            buffer.push(1);                
+            cv_not_empty.notify_one();     
         }
     }
+
+
     void consumer_task(int items)
     {
         for (int i = 0; i < items; i++)
         {
-        
-            std ::unique_lock<std ::mutex> lock(mtx);
-            cv_c.wait(lock, []
-                      { return final_products>0; });
-            
-            final_products--;
+            std::unique_lock<std::mutex> lock(mtx);
+
+            cv_not_empty.wait(lock, []()
+            {
+                return !buffer.empty();
+            });
+
+            buffer.pop();                   
+            cv_not_full.notify_one();       
+
             lock.unlock();
             consume();
         }
     }
-    void Para(Thread_Pool &pool, std::atomic<int> &_threads, int raw_products)
+
+
+    void Para(Thread_Pool &pool, int threads, int raw_products)
     {
-        int p_threads = _threads / 2;
-        int c_threads = _threads - p_threads;
+        int p_threads = threads / 2;
+        int c_threads = threads - p_threads;
+
         int items_p = raw_products / p_threads;
-        int ex = raw_products % p_threads;
         int items_c = raw_products / c_threads;
-        std ::vector<std ::future<void>> futs;
+
+        int extra_p = raw_products % p_threads;
+        int extra_c = raw_products % c_threads;
+
+        std::vector<std::future<void>> futs;
 
         for (int i = 0; i < p_threads; i++)
         {
-            int k = items_p;
-            if (i == 0)
-                k += ex;
-            futs.emplace_back(pool.submit([k]
-                                          { produce_task(k); }));
+            int k = items_p + (i == 0 ? extra_p : 0);
+            futs.emplace_back(pool.submit([k] { producer_task(k); }));
         }
-        ex = raw_products % c_threads;
+
         for (int i = 0; i < c_threads; i++)
         {
-            int k = items_c;
-            if (i == 0)
-                k += ex;
-            futs.emplace_back(pool.submit([k]
-                                          { consumer_task(k); }));
+            int k = items_c + (i == 0 ? extra_c : 0);
+            futs.emplace_back(pool.submit([k] { consumer_task(k); }));
         }
-        for (auto &x : futs)
-        {
-            x.get();
-        }
+
+       
+        for (auto &f : futs)
+            f.get();
     }
-    static void test(Thread_Pool &pool, std ::atomic<int> &_threads)
+
+    static void test(Thread_Pool &pool, int threads)
     {
         int raw_products = 200;
-        auto start = std ::chrono::high_resolution_clock::now();
+
+        auto start = std::chrono::high_resolution_clock::now();
         Seq(raw_products);
-        auto end = std ::chrono::high_resolution_clock::now();
-        auto Seq_time = std ::chrono ::duration<double>(end - start).count();
+        auto end = std::chrono::high_resolution_clock::now();
+        auto Seq_time = std::chrono::duration<double>(end - start).count();
 
-        start = std ::chrono::high_resolution_clock::now();
-        Para(pool, _threads, raw_products);
-        end = std ::chrono::high_resolution_clock::now();
+        start = std::chrono::high_resolution_clock::now();
+        Para(pool, threads, raw_products);
+        end = std::chrono::high_resolution_clock::now();
+        auto Para_time = std::chrono::duration<double>(end - start).count();
 
-        auto Para_time = std ::chrono ::duration<double>(end - start).count();
-
-        std ::cout << "Producer - Consumer -\n";
-        std ::cout << "Seq_time -       " << Seq_time << "\n";
-        std ::cout << "Para_time -      " << Para_time << "\n";
-        std ::cout << "Boost -          " << Seq_time / Para_time << "x\n";
-        std ::cout << "---------------------------------------\n";
+        std::cout << "\nProducer–Consumer Pattern Benchmark\n";
+        std::cout << "Sequential Time : " << Seq_time << " sec\n";
+        std::cout << "Parallel Time   : " << Para_time << " sec\n";
+        std::cout << "Speedup         : " << Seq_time / Para_time << "x\n";
+        std::cout << "---------------------------------------\n";
     }
-};
+}
