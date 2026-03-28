@@ -16,7 +16,7 @@ namespace Matrix_Multiplication
         {
             return {};
         }
-        std::vector<std ::vector<int>> C(A_Row, std ::vector<int>(B_Col));
+        std::vector<std ::vector<int>> C(A_Row, std ::vector<int>(B_Col,0));
         for (int i = 0; i < A_Row; i++)
         {
             for (int j = 0; j < B_Col; j++)
@@ -37,7 +37,7 @@ namespace Matrix_Multiplication
         {
             return {};
         }
-        std::vector<std ::vector<int>> C(A_Row, std ::vector<int>(B_Col));
+        std::vector<std ::vector<int>> C(A_Row, std ::vector<int>(B_Col,0));
         int d = _threads;
         int block_size = (A_Row + d - 1) / d;
         
@@ -51,9 +51,10 @@ namespace Matrix_Multiplication
                 {
                     for (int j = 0; j < B_Col; j++)
                     {
-                        int sum = 0;
-                        for (int k = 0; k < A_Col; ++k) sum += A[i][k] * B[k][j];
-                        C[i][j] = sum;
+                        for (int k = 0; k < A_Col; ++k)
+                        {
+                            C[i][j] += A[i][k] * B[k][j];
+                        }
                     }
                 }    
             }
