@@ -60,20 +60,22 @@ namespace Quick_Sort
         if (right_size > left_size)
         {
             auto right = pool.submit([&v, &pool, p, r, &_threads]
-                                     {
-            _threads.fetch_sub(1);
-            para_sort(p+1,r,v,pool,_threads);
-            _threads.fetch_add(1); });
+                {
+                    _threads.fetch_sub(1);
+                    para_sort(p+1,r,v,pool,_threads);
+                    _threads.fetch_add(1); 
+                });
             para_sort(l, p - 1, v, pool, _threads);
             right.get();
         }
         else
         {
             auto left = pool.submit([&v, &pool, p, l, &_threads]
-                                    {
-            _threads.fetch_sub(1);
-            para_sort(l,p-1,v,pool,_threads);
-            _threads.fetch_add(1); });
+                {
+                    _threads.fetch_sub(1);
+                    para_sort(l,p-1,v,pool,_threads);
+                    _threads.fetch_add(1);
+                });
             para_sort(p + 1, r, v, pool, _threads);
             left.get();
         }
