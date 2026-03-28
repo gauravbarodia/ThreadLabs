@@ -66,11 +66,13 @@ namespace Merge_Sort
 
         int m = (l + r) / 2;
         auto left = pool.submit([&v, &pool, l, m,&_threads]()
-                                { 
-                                    _threads.fetch_sub(1);
+            { 
+                _threads.fetch_sub(1);
 
-                                    para_sort(v, l, m, pool,_threads ); 
-                                    _threads.fetch_add(1); });
+                para_sort(v, l, m, pool,_threads ); 
+                
+                _threads.fetch_add(1);
+            });
 
         para_sort(v, m + 1, r, pool, _threads);
 
