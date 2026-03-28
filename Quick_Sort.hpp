@@ -9,6 +9,16 @@ namespace Quick_Sort
 {
     int partition(int l, int r, std ::vector<int> &v)
     {
+        int m = l + (r - l) / 2;
+
+        if (v[m] < v[l])
+            std::swap(v[l], v[m]);
+        if (v[r] < v[l])
+            std::swap(v[l], v[r]);
+        if (v[r] < v[m])
+            std::swap(v[m], v[r]);
+
+        std::swap(v[m], v[l]);
         int pivot = v[l];
         int i = l;
         for (int j = l + 1; j <= r; j++)
